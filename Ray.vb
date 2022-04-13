@@ -5,7 +5,7 @@
     Public Length As Single
     Public HitValue As Integer
 
-    Const PrecisionValue As Integer = 3
+    Const PrecisionValue As Integer = 1
 
     Sub New(xin As Single, yin As Single, thetain As Single)
         x = xin
@@ -33,9 +33,14 @@
                 R.HitValue = tempcellval
                 Exit While
             End If
-            R.Length += 0.5
+            R.Length += 0.25
         End While
+        FixFishEye()
         Match(R)
+    End Sub
+    Private Sub FixFishEye()
+        Dim templength As Single = Me.Length * Math.Cos(Me.theta)
+        Me.Length = templength
     End Sub
     Private Sub Match(R As Ray)
         Me.x = R.x
