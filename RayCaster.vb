@@ -32,9 +32,9 @@ Public Class RayCaster
     End Sub
     Public Sub Update()
         'This Method is called every frame
-        DrawBackground()
         Buttons()
-        Cast()
+        P.Cast(MyMap, CellSize)
+        DrawBackground()
         Draw()
     End Sub
     ' =============================================================
@@ -80,21 +80,11 @@ Public Class RayCaster
             Next
         Next
     End Sub
-    Private Sub Cast()
-        Dim Counter As Integer = 0
-        For i = -P.FOV To P.FOV Step P.Density
-            Dim R As New Ray(P.x, P.y, P.theta + i)
-
-            R.Formulate(P, MyMap, CellSize)
-
-            ReDim Preserve P.Rays(Counter)
-            P.Rays(Counter) = R
-            Counter += 1
-        Next
-    End Sub
     Private Sub Projection(ByRef g As Graphics)
+
+        Dim Counter As Integer
         Dim ColWidth As Integer = Canvas.Width / P.Rays.Length
-        Dim counter As Integer
+        Dim currentx As Integer
         For i = 0 To P.Rays.Length - 1
             If P.Rays(i).Length <> 0 Then
                 Dim LineHeight As Integer
@@ -107,39 +97,44 @@ Public Class RayCaster
                 Dim val As Integer = 255 - (255 * P.Rays(i).Length / (P.Rays.Length) * P.Depth)
                 If val < 0 Then val = 0
                 If val > 255 Then val = 255
+
                 Dim c As Color
+
                 Select Case P.Rays(i).HitValue
                     Case 1
-                        '         DrawTexture(My.Resources.Wall, P.Rays(i), LineHeight, counter, ColWidth, g)
-                        c = Color.FromArgb(255, val, val, val)
-                        g.FillRectangle(New SolidBrush(c), counter, CSng(Canvas.Height / 2) - CSng(LineHeight / 2) - P.delta, ColWidth, LineHeight)
+                        c = Color.FromArgb(val, val, val)
                     Case 2
-                        c = Color.FromArgb(255, val, 0, 0)
-                        g.FillRectangle(New SolidBrush(c), counter, CSng(Canvas.Height / 2) - CSng(LineHeight / 2) - P.delta, ColWidth, LineHeight)
+                        c = Color.FromArgb(val, val, 0)
                     Case 3
-                        c = Color.FromArgb(255, 0, 0, val)
-                        g.FillRectangle(New SolidBrush(c), counter, CSng(Canvas.Height / 2) - CSng(LineHeight / 2) - P.delta, ColWidth, LineHeight)
+                        c = Color.FromArgb(val, 0, val)
                     Case 4
-                        c = Color.FromArgb(255, 0, val, val)
-                        g.FillRectangle(New SolidBrush(c), counter, CSng(Canvas.Height / 2) - CSng(LineHeight / 2) - P.delta, ColWidth, LineHeight)
+                        c = Color.FromArgb(0, val, val)
                     Case 5
-                        c = Color.FromArgb(255, val, val, 0)
-                        g.FillRectangle(New SolidBrush(c), counter, CSng(Canvas.Height / 2) - CSng(LineHeight / 2) - P.delta, ColWidth, LineHeight)
+                        c = Color.FromArgb(0, 0, val)
                 End Select
+
+                If Counter = (P.Rays.Length - 1) / 2 Then
+                    g.FillRectangle(Brushes.Black, currentx, CSng(Canvas.Height / 2) - CSng(LineHeight / 2) - P.delta, ColWidth, LineHeight)
+                Else
+                    g.FillRectangle(New SolidBrush(c), currentx, CSng(Canvas.Height / 2) - CSng(LineHeight / 2) - P.delta, ColWidth, LineHeight)
+                End If
+                Counter += 1
             End If
-            counter += ColWidth
+
+                currentx += ColWidth
+            a
         Next
     End Sub
 
     Sub DrawTexture(Texture As Image, R As Ray, LH As Single, C As Integer, ColWidth As Integer, ByRef g As Graphics)
 
-        Dim x As Integer = Texture.Width / 2 ' R.y - CellSize * Math.Floor(R.y / CellSize)
+        Dim x As Integer = R.y - CellSize * Math.Floor(R.y / CellSize)
 
         Dim bmp As New Bitmap(Texture, Texture.Size)
         Dim sec As Bitmap = bmp.Clone(New Rectangle(x, 0, ColWidth, bmp.Height), bmp.PixelFormat)
         Dim final As New Bitmap(sec, New Size(ColWidth, LH))
 
-        g.DrawImageUnscaled(final, New Point(C, CSng(Canvas.Height / 2) - CSng(LH / 2) - P.delta))
+        g.DrawImage(final, New Point(C, CSng(Canvas.Height / 2) - CSng(LH / 2) - P.delta))
 
         bmp.Dispose()
         sec.Dispose()
@@ -165,15 +160,19 @@ Public Class RayCaster
             P.dy = Math.Sin(P.theta) * 5
         End If
         If GetAsyncKeyState(87) Then 'w
-            If CellValue(P.y + (P.dy * 3), P.x + (P.dx * 3), MyMap, CellSize) = 0 Then
+            If CellValue(P.y + (P.dy * 3), P.x, MyMap, CellSize) = 0 Then
                 P.y += P.dy
+            End If
+            If CellValue(P.y, P.x + (P.dx * 3), MyMap, CellSize) = 0 Then
                 P.x += P.dx
             End If
         End If
         If GetAsyncKeyState(83) Then 's
-            If CellValue(P.y - (P.dy * 3), P.x - (P.dx * 3), MyMap, CellSize) = 0 Then
-                P.x -= P.dx
+            If CellValue(P.y - (P.dy * 3), P.x, MyMap, CellSize) = 0 Then
                 P.y -= P.dy
+            End If
+            If CellValue(P.y, P.x - (P.dx * 3), MyMap, CellSize) = 0 Then
+                P.x -= P.dx
             End If
         End If
         If GetAsyncKeyState(77) Then 'm

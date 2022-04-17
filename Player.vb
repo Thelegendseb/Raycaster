@@ -24,4 +24,17 @@
         Depth = Depthin
     End Sub
 
+    Public Sub Cast(Grid(,) As Integer, CellSize As Integer)
+        Dim Counter As Integer = 0
+        For i = -Me.FOV To Me.FOV Step Me.Density
+            Dim R As New Ray(Me.x, Me.y, Me.theta + i)
+
+            R.Formulate(Me, Grid, CellSize)
+
+            ReDim Preserve Me.Rays(Counter)
+            Me.Rays(Counter) = R
+            Counter += 1
+        Next
+    End Sub
+
 End Class

@@ -4,8 +4,9 @@
     Public theta As Single
     Public Length As Single
     Public HitValue As Integer
+    Public VerticalHit As Boolean
 
-    Const PrecisionValue As Integer = 1
+    Public Shared ReadOnly PrecisionValue As Single = 0.9
 
     Sub New(xin As Single, yin As Single, thetain As Single)
         x = xin
@@ -26,6 +27,7 @@
             R.x += R.dx
             R.y += R.dy
             If R.x < 0 Or R.x > ScaleFactor * G.GetLength(1) Or R.y < 0 Or R.y > ScaleFactor * G.GetLength(0) Then
+                R.Length = 0
                 Exit While
             End If
             Dim tempcellval As Integer = RayCaster.CellValue(R.y, R.x, G, ScaleFactor)
@@ -35,6 +37,13 @@
             End If
             R.Length += 0.25
         End While
+
+        If RayCaster.CellValue(R.y, R.x + R.dx, G, ScaleFactor) <> 0 Then
+            R.VerticalHit = True
+        Else
+            R.VerticalHit = False
+        End If
+
         FixFishEye()
         Match(R)
     End Sub
@@ -42,6 +51,7 @@
         Dim templength As Single = Me.Length * Math.Cos(Me.theta)
         Me.Length = templength
     End Sub
+
     Private Sub Match(R As Ray)
         Me.x = R.x
         Me.y = R.y
